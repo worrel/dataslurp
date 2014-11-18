@@ -1,6 +1,6 @@
 # dataslurp
 
-A sandbox project to explore social feed data acquisition.
+A sandbox project to explore social feed data acquisition.  Right now it only works with Twitter.
 
 Written in Scala, utilizing [Twitter Hosebird][1], [RabbitMQ][2] and [Akka][3]
 
