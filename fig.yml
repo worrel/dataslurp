@@ -1,0 +1,17 @@
+db:
+  image: mysql
+mq1:
+  image: dockerfile/rabbitmq    
+mq2:
+  image: dockerfile/rabbitmq
+cass:
+  image: spotify/cassandra
+app:
+  build: .
+  volumes:
+    - .:/dataslurp-app
+  links:
+    - db
+    - mq1
+    - mq2
+    - cass
