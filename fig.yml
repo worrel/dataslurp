@@ -13,6 +13,11 @@ app:
     - .:/dataslurp-app
   environment:
     DB_HOST: db
+    MQ_HOST: mq
+    CONSUMER_KEY:
+    CONSUMER_SECRET:
+    ACCESS_TOKEN:
+    ACCESS_SECRET:
   links:
     - db
     - mq
