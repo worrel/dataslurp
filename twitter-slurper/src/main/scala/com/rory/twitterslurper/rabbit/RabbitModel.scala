@@ -27,5 +27,5 @@ class RabbitMessage(val deliveryTag: Long, val body: ByteString,
 /**
  * Exchange and queue names.
  */
-case class RabbitBinding(exchange: String, queue: String)
+case class RabbitBinding(exchange: String, queue: String, routingKey: String)
 

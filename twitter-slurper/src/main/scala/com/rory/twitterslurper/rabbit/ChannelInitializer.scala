@@ -9,11 +9,11 @@ import scala.collection.JavaConversions._
  */
 trait ChannelInitializer {
   
-  def initChannel(binding: RabbitBinding)(implicit connection: Connection): Channel = {
+  def initChannel(connection: Connection, binding: RabbitBinding): Channel = {
     val ch = connection.createChannel()
     ch.exchangeDeclare(binding.exchange, "direct", true)
     ch.queueDeclare(binding.queue, true, false, false, Map[String, java.lang.Object]())
-    ch.queueBind(binding.queue, binding.exchange, "")
+    ch.queueBind(binding.queue, binding.exchange, binding.routingKey)
     ch
   }
 }

@@ -2,9 +2,7 @@ package com.rory.twitterslurper
 
 import akka.actor.{ActorRef, ActorLogging, Actor}
 import akka.event.LoggingReceive
-import com.fasterxml.jackson.core.JsonParseException
-import com.fasterxml.jackson.databind.JsonMappingException
-import com.rory.twitterslurper.Messages.{BadTweet, Tweet, RawTweet}
+import com.rory.twitterslurper.Messages.{MalformedAPIMessage, JsonAPIMessage, RawAPIMessage}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
@@ -14,15 +12,17 @@ import org.json4s.jackson.JsonMethods._
 class TweetParser(next: ActorRef)
     extends Actor
     with ActorLogging {
+
   override def receive = LoggingReceive {
-    case RawTweet(data) ⇒ {
-      try {
-        val tweetJson = parse(data)
-        next ! Tweet(tweetJson,"twitter-slurper")
-      } catch {
-        case jpe: JsonParseException ⇒ next ! BadTweet(data,jpe)
-        case jme: JsonMappingException ⇒ next ! BadTweet(data,jme)
+    case RawAPIMessage(data) ⇒ {
+      val tweetJson = parseOpt(data)
+
+      tweetJson match {
+        case Some(jv) ⇒ next ! JsonAPIMessage(jv,"twitter-slurper")
+        case None ⇒ next ! MalformedAPIMessage(data)
       }
     }
   }
+
+
 }

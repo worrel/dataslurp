@@ -1,14 +1,9 @@
-package com.rory.datapersister
+package com.rory.twitterslurper
 
-import java.net.InetSocketAddress
-
-import akka.actor.ActorSystem
-import akka.pattern.ask
+import akka.actor.{ActorSystem, Props}
 import akka.util.Timeout
-import com.rabbitmq.client.Connection
-import com.rory.twitterslurper.Queues
-import com.rory.twitterslurper.rabbit.RabbitConnectionActor.Connect
-import com.rory.twitterslurper.rabbit.{RabbitConsumerActor, RabbitConnectionActor}
+import com.typesafe.config.ConfigFactory
+
 import scala.concurrent.duration._
 
 /**
@@ -16,19 +11,18 @@ import scala.concurrent.duration._
  */
 object PersistMain extends App {
 
-  implicit val timeout = Timeout(2 seconds)
+  val config = ConfigFactory.load()
+  val mqHost = config.getString("rabbitmq.host")
+  val mqPort = config.getInt("rabbitmq.port")
 
   val actorSystem = ActorSystem("data-persister")
+
+  implicit val timeout = Timeout(2 seconds)
   implicit val executor = actorSystem.dispatcher
 
-  val connectionActor = actorSystem.actorOf(
-    RabbitConnectionActor.props(new InetSocketAddress("127.0.0.1", 5672)),
-    "rmq-conn-provider-persist")
-
-  (connectionActor ? Connect).mapTo[Connection] map {
-    implicit conn ⇒
-      val rabbitConsumer = actorSystem.actorOf(
-        RabbitConsumerActor.props(Queues.tweetInputBinding),
-        "rmq-tweet-consumer")
-  }
+  actorSystem.actorOf(
+    Props(new PersistenceServiceActor(mqHost,mqPort)),
+    "persistence-service")
 }
+
+

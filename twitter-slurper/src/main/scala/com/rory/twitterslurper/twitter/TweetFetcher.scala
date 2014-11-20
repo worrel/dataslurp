@@ -4,7 +4,7 @@ import java.util.concurrent.BlockingQueue
 
 import akka.actor.{ActorRef, PoisonPill, Actor, ActorLogging}
 import akka.event.LoggingReceive
-import com.rory.twitterslurper.Messages.RawTweet
+import com.rory.twitterslurper.Messages.RawAPIMessage
 import com.rory.twitterslurper.TweetFetcher.{ReportStats, Acquire}
 import com.twitter.hbc.httpclient.BasicClient
 
@@ -33,7 +33,12 @@ class TweetFetcher(hosebirdClient: BasicClient, tweetQueue: BlockingQueue[String
   private def acquireTweet(to: ActorRef) = {
     if(!hosebirdClient.isDone) {
       val tweet = tweetQueue.take()
-      to ! RawTweet(tweet)
+
+      if(tweet != null && tweet.trim.length > 0)
+        to ! RawAPIMessage(tweet)
+      else
+        log.warning("Empty line received from API")
+
       self ! Acquire()
     } else {
       self ! PoisonPill

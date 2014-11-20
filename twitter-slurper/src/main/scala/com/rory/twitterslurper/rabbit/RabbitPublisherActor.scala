@@ -1,29 +1,51 @@
 package com.rory.twitterslurper.rabbit
 
+import java.nio.charset.StandardCharsets
+
 import akka.actor.{ActorLogging, Actor}
 import akka.event.LoggingReceive
 import com.rabbitmq.client.{AMQP, Connection}
-import com.rory.twitterslurper.Messages.{BadTweet, Tweet}
+import com.rory.twitterslurper.Messages._
 import org.json4s.jackson.JsonMethods._
 
 /**
  * Created by rory on 11/17/14.
  */
 
-class RabbitPublisherActor(binding: RabbitBinding)(implicit connection: Connection)
+class RabbitPublisherActor(connection: Connection, tweetBinding: RabbitBinding, commandBinding: RabbitBinding)
     extends Actor
     with ActorLogging
     with ChannelInitializer {
 
-  val channel = initChannel(binding)
+  val tweetChannel = initChannel(connection, tweetBinding)
+  val commandChannel = initChannel(connection, commandBinding)
   val propsBuilder = new AMQP.BasicProperties.Builder()
   val jsonProps = propsBuilder.contentType("application/json").build()
+  val textProps = propsBuilder.contentType("text/plain").build()
 
   override def receive = LoggingReceive {
-    case Tweet(data,prov) ⇒ {
-      channel.basicPublish(binding.exchange, "", jsonProps, compact(render(data)).getBytes)
+    case JsonTweetData(data) ⇒ {
+      tweetChannel.basicPublish(
+        tweetBinding.exchange, tweetBinding.routingKey, jsonProps,
+        compact(render(data)).getBytes(StandardCharsets.UTF_8))
     }
 
-    case BadTweet(data,err) ⇒ log.warning(s"IGNORING bad tweet, REASON: ${err.getMessage}")
+    case cmd: APICommand ⇒ processCommand(cmd)
+
+    case MalformedAPIMessage(data) ⇒ log.warning(s"IGNORING bad tweet")
+  }
+
+  // TODO: not handling commands right now, for shame!
+  def processCommand(command: APICommand) = {
+    log.info("Processing command {}", command)
+    val order = command match {
+      case DeleteTweetCommand(id,userId) ⇒ s"D|$id|$userId"
+      case ScrubGeoCommand(upTo,userId) ⇒ s"S|$upTo|$userId"
+      case ContentWithheldCommand(optId, userId, countries) ⇒ s"W|$countries|$userId|$optId"
+    }
+
+    commandChannel.basicPublish(
+      commandBinding.exchange, commandBinding.routingKey, textProps,
+      order.getBytes(StandardCharsets.UTF_8))
   }
 }

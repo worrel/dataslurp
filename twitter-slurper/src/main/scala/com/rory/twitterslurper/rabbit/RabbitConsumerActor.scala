@@ -1,22 +1,23 @@
 package com.rory.twitterslurper.rabbit
 
-import akka.actor.{Actor, ActorLogging, Props}
+import java.nio.charset.StandardCharsets
+
+import akka.actor.{ActorRef, Actor, ActorLogging}
 import akka.event.LoggingReceive
 import akka.util.ByteString
 import com.rabbitmq.client._
+import com.rory.twitterslurper.Messages.Tweet
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
 
-object RabbitConsumerActor {
-  
-  def props(binding: RabbitBinding)(implicit connection: Connection): Props =
-    Props(new RabbitConsumerActor(binding))
-}
-
-class RabbitConsumerActor(binding: RabbitBinding)(implicit connection: Connection)
+class RabbitConsumerActor(connection: Connection, binding: RabbitBinding, next: ActorRef)
     extends Actor
     with ActorLogging
     with ChannelInitializer {
-  
-  val channel = initChannel(binding)
+
+  implicit val formats = DefaultFormats
+
+  val channel = initChannel(connection, binding)
 
   val consumer = new DefaultConsumer(channel) {
     override def handleDelivery(
@@ -24,7 +25,8 @@ class RabbitConsumerActor(binding: RabbitBinding)(implicit connection: Connectio
         envelope: Envelope, 
         properties: AMQP.BasicProperties, 
         body: Array[Byte]) = {
-      self ! new RabbitMessage(envelope.getDeliveryTag(), ByteString(body), properties, channel)
+      self ! new RabbitMessage(envelope.getDeliveryTag(),
+        ByteString(body), properties, channel)
     }
   }
 
@@ -32,7 +34,16 @@ class RabbitConsumerActor(binding: RabbitBinding)(implicit connection: Connectio
 
   override def receive = LoggingReceive {
     case msg: RabbitMessage ⇒ {
-      log.debug(s"received ${msg.deliveryTag}")
+      log.debug("received {}",msg.deliveryTag)
+
+      val json = parse(msg.body.decodeString(StandardCharsets.UTF_8.name))
+
+      log.debug("json {}",json)
+
+      val tweet = json.extract[Tweet]
+
+      next ! tweet
+
       channel.basicAck(msg.deliveryTag, false);
     }
   }
