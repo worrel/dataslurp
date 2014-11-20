@@ -10,6 +10,14 @@ Written in Scala, utilizing [Twitter Hosebird][1], [RabbitMQ][2] and [Akka][3]
 
 ## Install
 
-Development environment is based on [Fig][1] and [Docker][2].  Install both according to the instructions on their respective websites, then run
+Development environment is based on [Fig][1] and [Docker][2].  
+
+1. Install both according to the instructions on their respective websites
+2. Modify twitter-slurper/env.sh to provide your own Twitter API keys
+3. Source env.sh
+
+	 . twitter-slurper/env.sh
+
+4. Run
 
     fig up
