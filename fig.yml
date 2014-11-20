@@ -1,24 +1,23 @@
-db:
-  image: dockerfile/mysql
+mysql:
+  image: orchardup/mysql
+  environment:
+    MYSQL_DATABASE: dataslurp
   ports:
-    - "127.0.0.1:33306:3306"
+    - "33306:3306"
 rabbit:
   image: dockerfile/rabbitmq
-#cass:
-#  image: spotify/cassandra
 app:
   build: .
   command: ./run.sh
   volumes:
     - .:/dataslurp-app
   environment:
-    DB_HOST: db
+    DB_HOST: mysql
     MQ_HOST: rabbit
     CONSUMER_KEY:
     CONSUMER_SECRET:
     ACCESS_TOKEN:
     ACCESS_SECRET:
   links:
-    - db
+    - mysql
     - rabbit
- #   - cass
