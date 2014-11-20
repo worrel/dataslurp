@@ -8,7 +8,7 @@ cass:
   image: spotify/cassandra
 app:
   build: .
-  command: run.sh
+  command: ./run.sh
   volumes:
     - .:/dataslurp-app
   environment:
