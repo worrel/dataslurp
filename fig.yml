@@ -4,8 +4,8 @@ db:
     - "127.0.0.1:33306:3306"
 mq:
   image: dockerfile/rabbitmq
-cass:
-  image: spotify/cassandra
+#cass:
+#  image: spotify/cassandra
 app:
   build: .
   command: ./run.sh
@@ -16,4 +16,4 @@ app:
   links:
     - db
     - mq
-    - cass
+ #   - cass
