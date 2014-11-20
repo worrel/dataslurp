@@ -2,7 +2,7 @@ db:
   image: dockerfile/mysql
   ports:
     - "127.0.0.1:33306:3306"
-mq:
+rabbit:
   image: dockerfile/rabbitmq
 #cass:
 #  image: spotify/cassandra
@@ -20,5 +20,5 @@ app:
     ACCESS_SECRET:
   links:
     - db
-    - mq
+    - rabbit
  #   - cass

@@ -13,7 +13,7 @@ object PersistMain extends App {
 
   val config = ConfigFactory.load()
   val mqHost = config.getString("rabbitmq.host")
-  val mqPort = config.getString("rabbitmq.port")
+  val mqPort = config.getInt("rabbitmq.port")
 
   val actorSystem = ActorSystem("data-persister")
 
@@ -21,7 +21,7 @@ object PersistMain extends App {
   implicit val executor = actorSystem.dispatcher
 
   actorSystem.actorOf(
-    Props(new PersistenceServiceActor(mqHost,mqPort.toInt)),
+    Props(new PersistenceServiceActor(mqHost,mqPort)),
     "persistence-service")
 }
 

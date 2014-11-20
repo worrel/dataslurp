@@ -27,13 +27,13 @@ object SlurpMain extends App {
   val secret = config.getString("twitter.access.secret")
 
   val mqHost = config.getString("rabbitmq.host")
-  val mqPort = config.getString("rabbitmq.port")
+  val mqPort = config.getInt("rabbitmq.port")
 
   val twitterConnection = new TwitterConnection(consumerKey, consumerSecret, token, secret)
 
   val connectionActor = actorSystem.actorOf(
     RabbitConnectionActor.props(
-      new InetSocketAddress(mqHost, mqPort.toInt)),
+      new InetSocketAddress(mqHost, mqPort)),
     "rmq-conn-provider-slurp")
 
   implicit val timeout = Timeout(2 seconds)
